@@ -60,7 +60,7 @@ func main() {
 	v1Router.Get("/healthz", handlerReadiness) // full path for this request will be /v1/healthz
 	v1Router.Get("/err", handlerErr) // path for this is the /v1/err
 	v1Router.Post("/users", apiCfg.handlerCreateUser)
-	v1Router.Get("/users", apiCfg.handlerGetUser)
+	v1Router.Get("/users", apiCfg.middlewareAuth(apiCfg.handlerGetUser))
 
 	srv := &http.Server { // defining the server that will use that first router
 		Handler: 	router,
