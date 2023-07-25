@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Alphonnse/rssagg/internal/auth"
 	"github.com/Alphonnse/rssagg/internal/database"
 	"github.com/google/uuid"
 )
