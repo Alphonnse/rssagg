@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -20,6 +21,13 @@ type apiConfig struct {
 
 
 func main() {
+	feed, err := urlToFeed("https://wagslane.dev/index.xml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(feed)
+
+
 	godotenv.Load(".env") // there we just importing the .env config file
 
 	portString := os.Getenv("PORT") // importing the port from .env
@@ -57,6 +65,7 @@ func main() {
 	// the v1 router is for that if we make braking changes in the future we can have two different handlers
 	v1Router := chi.NewRouter()
 	router.Mount("/v1", v1Router)
+
 	v1Router.Get("/healthz", handlerReadiness) // full path for this request will be /v1/healthz
 	v1Router.Get("/err", handlerErr) // path for this is the /v1/err
 
@@ -65,6 +74,12 @@ func main() {
 
 	v1Router.Post("/feeds", apiCfg.middlewareAuth(apiCfg.handlerCreateFeed))
 	v1Router.Get("/feeds", apiCfg.handlerGetFeeds) // path for this is the /v1/err
+
+
+	v1Router.Post("/feed_follows", apiCfg.middlewareAuth(apiCfg.handlerCreateFeedFallow))
+	v1Router.Get("/feed_follows", apiCfg.middlewareAuth(apiCfg.handlerGetFeedFallows))
+
+	v1Router.Delete("/feed_follows/{feedFollowID}", apiCfg.middlewareAuth(apiCfg.handlerDeleteFeedFallow))
 
 	srv := &http.Server { // defining the server that will use that first router
 		Handler: 	router,
