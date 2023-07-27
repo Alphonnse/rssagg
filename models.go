@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// This whole file for that we can specify the 
+// This whole file for that we can specify the
 // needed names in json (like snake case)
 
 // The pretty output when adding the user
@@ -95,4 +95,44 @@ func databaseFeedFollowsToFeedFollows(dbFeedFollows []database.FeedFollow) []Fee
 		feedFollows = append(feedFollows, databaseFeedFollowToFeedFollow(dbFeedFollow))
 	}
 	return feedFollows
+}
+
+
+
+// The pretty output of posts for every user
+type Post struct {
+	ID          uuid.UUID		`json:"id"`
+	CreatedAt   time.Time		`json:"created_at"`
+	UpdatedAt   time.Time		`json:"updated_at"`
+	Title       string			`json:"title"`
+	Description *string			`json:"description"` // json marshaling in go works is if you have the pointer to sting and it is nil, then it will marshall to what you'd expect in json land which is that "nil" value
+	PublishedAt time.Time		`json:"published_at"`
+	Url         string			`json:"url"`
+	FeedID      uuid.UUID		`json:"feed_id"`
+}
+
+func databasePostToPost(dbPost database.Post) Post {
+	var description *string
+	if dbPost.Description.Valid {
+		description = &dbPost.Description.String
+	}
+
+	return Post {
+		ID:				dbPost.ID,
+		CreatedAt:		dbPost.CreatedAt,
+		UpdatedAt:		dbPost.UpdatedAt,
+		Title:			dbPost.Title,
+		Description:	description,
+		PublishedAt:	dbPost.PublishedAt,
+		Url:			dbPost.Url,
+		FeedID:			dbPost.FeedID,
+	}
+}
+
+func databasePostsToPosts(dbPosts []database.Post) []Post {
+	posts := []Post{}
+	for _, dbPost := range dbPosts {
+		posts = append(posts, databasePostToPost(dbPost))
+	}
+	return posts
 }

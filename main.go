@@ -2,10 +2,10 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/Alphonnse/rssagg/internal/database"
 	"github.com/go-chi/chi"
@@ -21,13 +21,6 @@ type apiConfig struct {
 
 
 func main() {
-	feed, err := urlToFeed("https://wagslane.dev/index.xml")
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(feed)
-
-
 	godotenv.Load(".env") // there we just importing the .env config file
 
 	portString := os.Getenv("PORT") // importing the port from .env
@@ -46,10 +39,13 @@ func main() {
 	}
 
 	// its for that we can pass our api config to the handlers so that they can have access to our database
-	apiCfg := apiConfig {
-		DB: database.New(conn), // converting conn of type sql.db to database.queries
 
+	db := database.New(conn)
+	apiCfg := apiConfig {
+		DB: db, // converting conn of type sql.db to database.queries
 	}
+
+	go startScraping(db, 50, time.Minute)
 
 	router := chi.NewRouter() // defining the router
 	
@@ -75,11 +71,12 @@ func main() {
 	v1Router.Post("/feeds", apiCfg.middlewareAuth(apiCfg.handlerCreateFeed))
 	v1Router.Get("/feeds", apiCfg.handlerGetFeeds) // path for this is the /v1/err
 
-
 	v1Router.Post("/feed_follows", apiCfg.middlewareAuth(apiCfg.handlerCreateFeedFallow))
 	v1Router.Get("/feed_follows", apiCfg.middlewareAuth(apiCfg.handlerGetFeedFallows))
 
 	v1Router.Delete("/feed_follows/{feedFollowID}", apiCfg.middlewareAuth(apiCfg.handlerDeleteFeedFallow))
+
+	v1Router.Get("/posts", apiCfg.middlewareAuth(apiCfg.handlerGetPostsForUser))
 
 	srv := &http.Server { // defining the server that will use that first router
 		Handler: 	router,
